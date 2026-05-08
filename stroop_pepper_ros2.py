@@ -459,7 +459,7 @@ class Stroop(Node):
         self.declare_parameter("pepper_auto_place_on_start", True)
         self.declare_parameter("pepper_return_on_finish", True)
         self.declare_parameter("pepper_speak_enabled", False)
-        self.declare_parameter("pepper_hold_pose_enabled", False)
+        self.declare_parameter("pepper_hold_pose_enabled", True)
         self.declare_parameter("pepper_hold_pose_period_s", 0.50)
         self.declare_parameter("pepper_hold_pose_speed", 0.08)
         self.declare_parameter("pepper_hold_pose_start_delay_s", 1.0)
