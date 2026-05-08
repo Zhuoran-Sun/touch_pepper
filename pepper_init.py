@@ -1,5 +1,9 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
+'''
+motion.setExternalCollisionProtectionEnabled("Arms", False)
+TOO IMPORTANT
+'''
 
 import time
 from naoqi import ALProxy
