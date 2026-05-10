@@ -61,12 +61,23 @@ LEFT_HAND = "LHand"
 # Right-arm table placement sequence copied from your Python 2 NAOqi test script.
 # Tuple format: (joint angles for RIGHT_ARM_JOINTS, speed_fraction, hold_seconds)
 RIGHT_TABLE_POSE_SEQUENCE = [
-    ([1.6060779094696045, -0.008726646192371845, 1.745670199394226, 1.5620696544647217, -0.1825878620147705, 1.0], 1.0, 0.8),
-    ([1.6060779094696045, -0.008726646192371845, 1.7303303480148315, 1.5620696544647217, -1.6951122283935547, 1.0], 1.0, 0.8),
-    ([0.6473398208618164, -0.008726646192371845, 1.7272623777389526, 1.2624661922454834, -1.8238691091537476, 1.0], 1.0, 0.8),
-    ([0.6519417762756348, -0.008726646192371845, 1.728796362876892, 0.4709320068359375, -1.8238691091537476, 1.0], 1.0, 0.8),
-    # ([0.8912427425384521, -0.11504864692687988, 1.5953400135040283, 1.1673595905303955, -1.5509161949157715, 1.0], 1.0, 0.8),
-    # ([1.118272066116333, -0.1242525577545166, 1.604543924331665, 1.1305439472198486, -1.2671260833740234, 1.0], 1.0, 0.8),
+    ([1.862252950668335, -0.11811661720275879, 1.5876702070236206, 1.2900779247283936, -1.57, 1.0], 0.1, 0.8),
+    ([1.2486603260040283, -0.1242525577545166, 1.5876702070236206, 1.5523884296417236, -1.57, 1.0], 0.1, 0.8),
+    ([0.653359375, -0.056757211685180664, 1.5769323110580444, 0.5016117095947266, -1.57, 1.0], 0.1, 0.8),
+    ([0.653359375, -0.056757211685180664, 1.5769323110580444, 0.5016117095947266, -1.57, 0.7], 0.1, 0.8),
+    # ([1.831573247909546, -0.18714570999145508, 1.6260197162628174, 1.5620696544647217, -1.6337518692016602, 1.0], 0.1, 0.8),
+    # ([0.5384273529052734, -0.06902909278869629, 1.6060779094696045, 1.4557478427886963, -1.623013973236084, 1.0], 0.1, 0.8),
+    # ([0.6534757614135742, -0.05062127113342285, 1.6229517459869385, 0.40650486946105957, -1.7825498580932617, 1.0], 0.1, 0.8),
+    # ([0.6534757614135742, -0.05062127113342285, 1.6229517459869385, 0.40650486946105957, -1.7825498580932617, 0.7], 0.1, 0.8),
+]
+
+RIGHT_TABLE_END_SEQUENCE = [
+    # ([0.6534757614135742, -0.05062127113342285, 1.6229517459869385, 0.40650486946105957, -1.7825498580932617, 1.0], 0.1, 0.8),
+    ([0.6688156127929688, -0.16260194778442383, 1.607611894607544, 1.5585243701934814, -1.6582961082458496, 1.0], 0.1, 0.8),
+    ([1.8607189655303955, -0.14112615585327148, 1.6183497905731201, 1.5620696544647217, -1.7518701553344727, 1.0], 0.1, 0.8),
+    ([1.8484470844268799, -0.1472620964050293, 1.6168158054351807, 0.5951845645904541, -0.09975194931030273, 1.0], 0.1, 0.8),
+    
+    
 ]
 
 # Conservative left-arm placeholder. Tune on hardware before use.
@@ -88,12 +99,12 @@ LEFT_STAND_ARM_POSE = [1.45, 0.10, -1.20, -0.50, 0.00, 1.0]
 # converted as: hand_angle = 1.0 - close_amount.
 HAND_OPEN_VALUE = 1.0
 HAND_CLOSED_VALUE = 0.0
-HAND_REST_VALUE = 0.60
-SAFETY_CLOSE_AMOUNT_MAX = 0.40
-SQUISH_SMALL_CLOSE_AMOUNT = 0.30
+HAND_REST_VALUE = 0.70
+SAFETY_CLOSE_AMOUNT_MAX = 1.0
+SQUISH_SMALL_CLOSE_AMOUNT = 0.60
 SQUISH_SMALL_SPEED = 0.45
 SQUISH_SMALL_HOLD_S = 0.15
-SQUISH_LARGE_CLOSE_AMOUNT = 0.42
+SQUISH_LARGE_CLOSE_AMOUNT = 0.85
 SQUISH_LARGE_SPEED = 0.60
 SQUISH_LARGE_HOLD_S = 0.25
 FINISHED_SQUISH_CLOSE_AMOUNT = 0.25
@@ -110,7 +121,7 @@ SAY_FINISH = "The task is finished. Please fill in the questionnaire."
 def reverse_pose_sequence(seq: Sequence[Tuple[List[float], float, float]]) -> List[Tuple[List[float], float, float]]:
     """Reverse a pose sequence and slow it slightly for safer return motion."""
     return [
-        (angles, max(0.05, float(speed) * 0.85), max(0.2, float(hold_s)))
+        (angles, max(0.05, float(speed) * 1.2), max(1.0, float(hold_s)))
         for angles, speed, hold_s in reversed(list(seq))
     ]
 
@@ -143,15 +154,22 @@ class PepperArmBehavior:
         self.joint_pub = node.create_publisher(JointAnglesWithSpeed, self.joint_topic, 10)
         self.speech_pub = node.create_publisher(String, self.speech_topic, 10)
 
+        # if self.side == "right":
+        #     self.arm_joints = RIGHT_ARM_JOINTS
+        #     self.hand_joint = RIGHT_HAND
+        #     self.place_sequence = RIGHT_TABLE_POSE_SEQUENCE
+        #     self.stand_arm_pose = list(node.get_parameter("pepper_right_stand_arm_pose").value)
         if self.side == "right":
             self.arm_joints = RIGHT_ARM_JOINTS
             self.hand_joint = RIGHT_HAND
             self.place_sequence = RIGHT_TABLE_POSE_SEQUENCE
+            self.end_sequence = RIGHT_TABLE_END_SEQUENCE
             self.stand_arm_pose = list(node.get_parameter("pepper_right_stand_arm_pose").value)
         else:
             self.arm_joints = LEFT_ARM_JOINTS
             self.hand_joint = LEFT_HAND
             self.place_sequence = LEFT_TABLE_POSE_SEQUENCE
+            self.end_sequence = reverse_pose_sequence(LEFT_TABLE_POSE_SEQUENCE)
             self.stand_arm_pose = list(node.get_parameter("pepper_left_stand_arm_pose").value)
 
         if len(self.stand_arm_pose) != len(self.arm_joints):
@@ -166,6 +184,8 @@ class PepperArmBehavior:
         self._hold_timer_id = None
         self._hold_joint_names: List[str] = []
         self._hold_angles: List[float] = []
+        self._return_to_stand_started = False
+        self._return_to_stand_done = False
 
     def busy(self) -> bool:
         return time.monotonic() < self._busy_until
@@ -247,8 +267,11 @@ class PepperArmBehavior:
         self._hand_busy_until = now + max(0.1, float(hold_s) + 0.4)
         self._close_hand_value(close_value, speed)
         # Tk root is owned by the Stroop class; set later via attach_root().
+        # def reopen() -> None:
+        #     self.open_hand(speed)
+        #     self._hand_busy_until = time.monotonic() + 0.15
         def reopen() -> None:
-            self.open_hand(speed)
+            self.rest_hand(speed)
             self._hand_busy_until = time.monotonic() + 0.15
         self._root.after(int(max(0.0, hold_s) * 1000.0), reopen)
 
@@ -326,12 +349,22 @@ class PepperArmBehavior:
         self.node.get_logger().info(f"Pepper starting sequence: {label}")
 
         def step(i: int) -> None:
+            # if i >= len(sequence):
+            #     self.node.get_logger().info(f"Pepper sequence complete: {label}")
+            #     # Make sure the hand is open after placement/return. The final
+            #     # pose sequence also contains hand=1.0, but this extra command
+            #     # makes the intended state explicit.
+            #     self.open_hand(self.hand_open_speed)
+                
             if i >= len(sequence):
                 self.node.get_logger().info(f"Pepper sequence complete: {label}")
-                # Make sure the hand is open after placement/return. The final
-                # pose sequence also contains hand=1.0, but this extra command
-                # makes the intended state explicit.
-                self.open_hand(self.hand_open_speed)
+
+                if "place arm" in label:
+                    # After reaching the table, softly rest the hand on/around the participant's arm.
+                    self.rest_hand(self.hand_open_speed)
+                else:
+                    # For return motions, keep the hand open for safety.
+                    self.open_hand(self.hand_open_speed)
                 if hold_final_pose and sequence:
                     final_angles = list(sequence[-1][0])
                     # Give Pepper time to physically settle at the final pose before
@@ -365,33 +398,92 @@ class PepperArmBehavior:
         self.open_hand()
         self.run_pose_sequence(self.place_sequence, "place arm on table", hold_final_pose=True)
 
+    # def return_arm_to_rest(self) -> None:
+    #     self.open_hand()
+    #     self._cancel_hold_pose()
+    #     if self.return_on_finish:
+    #         return_sequence = reverse_pose_sequence(self.place_sequence)
+    #         if self.return_to_stand_pose:
+    #             # First move down/away by reversing the exact table-placement path,
+    #             # then finish in a neutral standing arm pose.
+    #             return_sequence = list(return_sequence) + [
+    #                 (list(self.stand_arm_pose), self.stand_pose_speed, self.stand_pose_hold_s)
+    #             ]
+    #         self.run_pose_sequence(
+    #             return_sequence,
+    #             "return arm to stand pose",
+    #             hold_final_pose=False,
+    #             cancel_existing_hold=False,
+    #         )
+
+    def _make_return_sequence(self) -> List[Tuple[List[float], float, float]]:
+        """Build the manually tuned return sequence, optionally ending in stand pose."""
+        return_sequence = list(self.end_sequence)
+        if self.return_to_stand_pose:
+            return_sequence = return_sequence + [
+                (list(self.stand_arm_pose), self.stand_pose_speed, self.stand_pose_hold_s)
+            ]
+        return return_sequence
+
     def return_arm_to_rest(self) -> None:
+        """Normal non-blocking return after the protocol finishes.
+
+        This uses Tk timers, so the GUI can remain visible after the game.
+        The return is guarded so closing the window afterward does not repeat it.
+        """
+        if self._return_to_stand_started or self._return_to_stand_done:
+            self._safe_log("info", "Pepper return-to-stand skipped because it already ran or is running.")
+            return
+
         self.open_hand()
         self._cancel_hold_pose()
-        if self.return_on_finish:
-            return_sequence = reverse_pose_sequence(self.place_sequence)
-            if self.return_to_stand_pose:
-                # First move down/away by reversing the exact table-placement path,
-                # then finish in a neutral standing arm pose.
-                return_sequence = list(return_sequence) + [
-                    (list(self.stand_arm_pose), self.stand_pose_speed, self.stand_pose_hold_s)
-                ]
-            self.run_pose_sequence(
-                return_sequence,
-                "return arm to stand pose",
-                hold_final_pose=False,
-                cancel_existing_hold=False,
-            )
 
+        if not self.return_on_finish:
+            self._return_to_stand_done = True
+            return
+
+        self._return_to_stand_started = True
+        return_sequence = self._make_return_sequence()
+
+        total_ms = int(
+            1000.0 * (
+                sum(max(0.0, float(hold_s)) for _, _, hold_s in return_sequence)
+                + 0.7
+            )
+        )
+
+        def mark_return_done() -> None:
+            self._return_to_stand_done = True
+            self._return_to_stand_started = False
+            self._safe_log("info", "Pepper return-to-stand marked complete.")
+
+        self.run_pose_sequence(
+            return_sequence,
+            "return arm to stand pose",
+            hold_final_pose=False,
+            cancel_existing_hold=False,
+        )
+
+        try:
+            self._root.after(total_ms, mark_return_done)
+        except tk.TclError:
+            self._return_to_stand_done = True
+            self._return_to_stand_started = False
 
     def cleanup_return_to_stand_blocking(self) -> None:
         """Best-effort emergency cleanup for Ctrl+C or closing the GUI.
 
-        The normal return path uses Tk timers, which may not execute after the
-        window is destroyed. This method publishes the return sequence
-        synchronously before the ROS node/context is destroyed.
+        If the game has not finished yet, this still runs the manually tuned
+        return sequence synchronously. If the normal finish return already ran
+        or is currently running, this skips so Pepper does not repeat the motion.
         """
+        if self._return_to_stand_started or self._return_to_stand_done:
+            self._safe_log("info", "Pepper emergency cleanup skipped because return-to-stand already ran or is running.")
+            return
+
+        self._return_to_stand_started = True
         self._safe_log("info", "Pepper emergency cleanup: opening hand and returning to stand pose.")
+
         try:
             self._cancel_hold_pose()
         except Exception:
@@ -407,13 +499,11 @@ class PepperArmBehavior:
             self._safe_log("warning", "Emergency open-hand command failed: %s" % exc)
 
         if not self.return_on_finish:
+            self._return_to_stand_done = True
+            self._return_to_stand_started = False
             return
 
-        return_sequence = reverse_pose_sequence(self.place_sequence)
-        if self.return_to_stand_pose:
-            return_sequence = list(return_sequence) + [
-                (list(self.stand_arm_pose), self.stand_pose_speed, self.stand_pose_hold_s)
-            ]
+        return_sequence = self._make_return_sequence()
 
         for angles, speed, hold_s in return_sequence:
             try:
@@ -430,6 +520,10 @@ class PepperArmBehavior:
             time.sleep(0.2)
         except Exception:
             pass
+
+        self._return_to_stand_done = True
+        self._return_to_stand_started = False
+
 
 
 class Stroop(Node):
@@ -463,7 +557,7 @@ class Stroop(Node):
         self.declare_parameter("pepper_hold_pose_period_s", 0.50)
         self.declare_parameter("pepper_hold_pose_speed", 0.08)
         self.declare_parameter("pepper_hold_pose_start_delay_s", 1.0)
-        self.declare_parameter("pepper_force_hand_open_during_hold", True)
+        self.declare_parameter("pepper_force_hand_open_during_hold", False)
         self.declare_parameter("pepper_hand_open_speed", 0.30)
         self.declare_parameter("pepper_return_to_stand_pose", True)
         self.declare_parameter("pepper_stand_pose_speed", 0.25)
@@ -852,18 +946,50 @@ class Stroop(Node):
             if phase.get("end_screen", False):
                 self._finish_protocol()
             return
+        # if phase["type"] == "break":
+        #     self._awaiting_advance_key = False
+        #     self._collect_responses_in_block = False
+        #     self._set_manager_controls_enabled(False)
+        #     cue_text = str(phase.get("message", "BREAK"))
+        #     self._truth_label.config(text=cue_text, fg="black", font=("Helvetica", 60, "bold"))
+        #     self._controls_label.config(text="")
+        #     self._feedback_label.config(text="", fg="black")
+        #     self._status_label.config(text=f"Black screen for {phase['duration_ms'] // 1000} seconds")
+        #     self._stimulus_window.configure(bg="black")
+        #     self._stimulus_label.config(text="", fg="white", bg="black")
+        #     self._instruction_label.config(text=cue_text, fg="white", bg="black", font=("Helvetica", 24, "bold"))
+        #     self._active_timer_id = self._root.after(int(phase["duration_ms"]), self._advance_phase)
+        #     return
+
         if phase["type"] == "break":
             self._awaiting_advance_key = False
             self._collect_responses_in_block = False
             self._set_manager_controls_enabled(False)
+
             cue_text = str(phase.get("message", "BREAK"))
+
             self._truth_label.config(text=cue_text, fg="black", font=("Helvetica", 60, "bold"))
             self._controls_label.config(text="")
             self._feedback_label.config(text="", fg="black")
             self._status_label.config(text=f"Black screen for {phase['duration_ms'] // 1000} seconds")
+
             self._stimulus_window.configure(bg="black")
+
+            # Re-layout the stimulus window so the black-screen instruction is centered.
+            self._stimulus_label.pack_forget()
+            self._instruction_label.pack_forget()
+            self._instruction_label.pack(expand=True)
+
             self._stimulus_label.config(text="", fg="white", bg="black")
-            self._instruction_label.config(text=cue_text, fg="white", bg="black", font=("Helvetica", 24, "bold"))
+            self._instruction_label.config(
+                text=cue_text,
+                fg="white",
+                bg="black",
+                font=("Helvetica", 72, "bold"),
+                wraplength=680,
+                justify="center",
+            )
+
             self._active_timer_id = self._root.after(int(phase["duration_ms"]), self._advance_phase)
             return
         if phase["type"] == "block":

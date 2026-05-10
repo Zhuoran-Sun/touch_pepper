@@ -18,6 +18,8 @@ posture = ALProxy("ALRobotPosture", PEPPER_IP, PEPPER_PORT)
 try:
     # life.setState("disabled")
     motion.wakeUp()
+    posture.goToPosture("StandInit", 0.5)
+    motion.setAngles('HeadYaw', -0.55, 0.1)
     motion.setStiffnesses("Body", 1.0)
     motion.setStiffnesses("RArm", 1.0)
     motion.setExternalCollisionProtectionEnabled("Arms", False)
